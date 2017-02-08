@@ -9,6 +9,8 @@ import AlgebraGenerator as AG
 import matplotlib.pyplot as plt
 import numpy as np
 
+import threading
+
 import time
 
 from keras.models import load_model
@@ -176,6 +178,23 @@ def generator(ag, max_seq_length, sample_size=32):
 		yield (np.asarray(samples), np.asarray(targets))
 
 
+class threadsafe_iter:
+	"""Takes an iterator/generator and makes it thread-safe by
+	    serializing call to the `next` method of given iterator/generator.
+	    """
+
+	def __init__(self, it):
+		self.it = it
+		self.lock = threading.Lock()
+
+	def __iter__(self):
+		return self
+
+	def next(self):
+		with self.lock:
+			return self.it.next()
+
+
 
 if __name__ == "__main__":
 
@@ -195,7 +214,7 @@ if __name__ == "__main__":
 	)
 
 	gen = generator(ag, seq_length)
-
+	gen = threadsafe_iter(gen)
 	# for _ in range (0, 5):
 	# 	next(gen)
 
