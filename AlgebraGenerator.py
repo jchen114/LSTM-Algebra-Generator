@@ -91,6 +91,7 @@ class AlgebraGenerator():
 		encoded_data = [[self.char_to_ix[x[0]]] for x in expression]
 		return expression, encoded_data
 
+
 	def save(self):
 		pickle.dump(self.data, open("algebra.p", 'wb'))
 		pickle.dump(self.encoded_data, open("algebra-encoded.p","wb"))

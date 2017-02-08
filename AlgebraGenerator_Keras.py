@@ -95,6 +95,26 @@ class AlgebraLSTMGeneratorKeras():
 			callbacks=callbacks
 		)
 
+	def train_on_generator(self, gen, epochs, batch_size=32):
+		filepath = "keras_model-{epoch:02d}-{val_loss:.5f}.hdf5"
+		checkpoint = ModelCheckpoint(filepath, monitor='val_loss', verbose=1, save_best_only=True, mode='auto')
+		earlyStopping = EarlyStopping(
+			monitor='val_loss',
+			patience=20
+		)
+		callbacks = [checkpoint, earlyStopping]
+
+		self.model.fit_generator(
+			generator=gen,
+			samples_per_epoch=batch_size * 100,
+			nb_epoch=epochs,
+			callbacks=callbacks,
+			validation_data=gen,
+			nb_val_samples=15,
+			nb_worker=10
+		)
+
+
 	def predict(self, seed, N=100):
 		preds = list()
 		for x in np.arange(N):
@@ -127,6 +147,7 @@ class AlgebraLSTMGeneratorKeras():
 		preds.append(seq)
 		return preds
 
+
 def build_input_labels(data, max_seq_length, num_features, nb_classes):
 	inputs = list()
 	labels = list()
@@ -141,6 +162,19 @@ def build_input_labels(data, max_seq_length, num_features, nb_classes):
 		inputs.append(input)
 		labels.append(label)
 	return inputs, labels
+
+
+def generator(ag, max_seq_length, sample_size=32):
+	while True:
+		samples = list()
+		targets = list()
+		while len(samples) < sample_size:
+			expression, encoded_data = ag.generate()
+			inputs, labels = build_input_labels([encoded_data], max_seq_length, 1, 6)
+			samples.extend(inputs)
+			targets.extend(labels)
+		yield (np.asarray(samples), np.asarray(targets))
+
 
 
 if __name__ == "__main__":
@@ -160,9 +194,16 @@ if __name__ == "__main__":
 		lstm_layers=[128, 128]
 	)
 
-	inputs, labels = build_input_labels(ag.encoded_data, seq_length, 1, 6)
+	gen = generator(ag, seq_length)
 
-	keras_lstm.train_net(epochs=30, inputs=inputs, labels=labels, batch_size=32)
+	# for _ in range (0, 5):
+	# 	next(gen)
+
+	keras_lstm.train_on_generator(gen, 30)
+
+	#inputs, labels = build_input_labels(ag.encoded_data, seq_length, 1, 6)
+
+	#keras_lstm.train_net(epochs=30, inputs=inputs, labels=labels, batch_size=32)
 
 	# test_ag = AG.AlgebraGenerator(ps=[0.55,0.25,0.2], num_trials=1)
 	# test_ag.run()
