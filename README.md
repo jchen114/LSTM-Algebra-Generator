@@ -3,6 +3,7 @@ A demonstration of using an LSTM network to generate syntactically correct Algeb
 
 ## Input
 The sequence follows these set of rules:
+
 1. An Expression (E) can transition into a terminal character (I); E -> I
 2. An Expression (E) can transition into a multiplicative expression; E -> M * M
 3. An Expression (E) can transition into an additive expression; E -> E + E
