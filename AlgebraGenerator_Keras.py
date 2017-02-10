@@ -11,6 +11,8 @@ import numpy as np
 
 import threading
 
+import os
+
 import time
 
 from keras.models import load_model
@@ -19,64 +21,74 @@ class AlgebraLSTMGeneratorKeras():
 
 	def __init__(self, max_seq_length, num_features, nb_classes, lstm_layers ):
 
-		self.data_dim = 1
-		self.timesteps = 1
-		self.nb_classes = nb_classes
-		self.batch_size = 1
+		files = [f for f in os.listdir('.') if os.path.isfile(f)]
+		self.loaded = False
+		for f in files:
+			if f.startswith('keras_model'):
+				print(f)
+				self.model = load_model(f)
+				self.loaded = True
+				break
 
-		# expected input batch shape: (batch_size, timesteps, data_dim)
-		# note that we have to provide the full batch_input_shape since the network is stateful.
-		# the sample of index i in batch k is the follow-up for the sample i in batch k-1.
-		print("Build model ----- ")
-		self.model = Sequential()
+		if not self.loaded:
+			self.data_dim = 1
+			self.timesteps = 1
+			self.nb_classes = nb_classes
+			self.batch_size = 1
 
-		self.model.add(
-			Masking(
-				mask_value=-1.0,
-				input_shape=(max_seq_length, num_features)
-			)
-		)
+			# expected input batch shape: (batch_size, timesteps, data_dim)
+			# note that we have to provide the full batch_input_shape since the network is stateful.
+			# the sample of index i in batch k is the follow-up for the sample i in batch k-1.
+			print("Build model ----- ")
+			self.model = Sequential()
 
-		for layer in lstm_layers:
 			self.model.add(
-				LSTM(
-					output_dim=layer,
-					return_sequences=True
+				Masking(
+					mask_value=-1.0,
+					input_shape=(max_seq_length, num_features)
 				)
 			)
+
+			for layer in lstm_layers:
+				self.model.add(
+					LSTM(
+						output_dim=layer,
+						return_sequences=True
+					)
+				)
+				self.model.add(
+					Dropout(
+						p=0.2
+					)
+				)
+
+			# Output Layer
 			self.model.add(
-				Dropout(
-					p=0.2
+				TimeDistributed(
+					Dense(
+						activation='softmax',
+						output_dim=nb_classes
+					)
 				)
 			)
 
-		# Output Layer
-		self.model.add(
-			TimeDistributed(
-				Dense(
-					activation='softmax',
-					output_dim=nb_classes
-				)
+			start = time.time()
+
+			self.model.compile(
+				optimizer='rmsprop',
+				loss='categorical_crossentropy'
 			)
-		)
 
-		start = time.time()
+			print("Compilation Time : ", time.time() - start)
 
-		self.model.compile(
-			optimizer='rmsprop',
-			loss='categorical_crossentropy'
-		)
+			print('model layers: ')
+			print(self.model.summary())
 
-		print("Compilation Time : ", time.time() - start)
+			print('model.inputs: ')
+			print(self.model.input_shape)
 
-		print('model layers: ')
-		print(self.model.summary())
-
-		print('model.inputs: ')
-		print(self.model.input_shape)
-
-		print('model.outputs: ')
-		print(self.model.output_shape)
+			print('model.outputs: ')
+			print(self.model.output_shape)
 
 	def train_net(self, epochs, inputs, labels, batch_size=32):
 
@@ -116,38 +128,43 @@ class AlgebraLSTMGeneratorKeras():
 			nb_worker=10
 		)
 
-
-	def predict(self, seed, N=100):
-		preds = list()
-		for x in np.arange(N):
-			seq = np.random.choice([0, 3], p=[0.5, 0.5])
-			p = seq
-			seq = [[seq]]
+	def predict(self, seq_length, N=20):
+		completed_sequences = list()
+		for _ in np.arange(N):
+			sequence = -1.0 * np.ones(shape=(seq_length, 1))
+			seed = np.random.choice([0, 3], p=[0.5, 0.5])
+			sequence[0][:] = seed
+			p = seed
+			index = 0
 			while p != 5:
 				prediction = self.model.predict_on_batch(
-					x=np.asarray([seq])
+					x=np.asarray([sequence])
 				)
-				ps = prediction[-1]
+				ps = prediction[0][index]
 				p = np.random.choice([0, 1, 2, 3, 4, 5], p=ps)  # Select from the distribution
-				new_seq = seq
-				new_seq.append([p])
-				seq = new_seq
-			preds.append(seq)
+				index += 1
+				sequence[index][0] = p
+			sequence = [el for el in sequence if el != -1]
+			completed_sequences.append(sequence)
+
 		# Just for kicks...
-		seq = [[3], [3], [3]]
+
 		p = 3
-		print("Feeding 3 open parenthesis: ")
+		sequence = -1.0 * np.ones(shape=(seq_length, 1))
+		seed = [[3], [3], [3]]
+		sequence[:3] = seed
+		index = 2
 		while p != 5:
-			predictions = self.model.predict_on_batch(
-				x=np.asarray([seq])
+			prediction = self.model.predict_on_batch(
+				x=np.asarray([sequence])
 			)
-			ps = predictions[-1]
+			ps = prediction[0][index]
 			p = np.random.choice([0, 1, 2, 3, 4, 5], p=ps)
-			new_seq = seq
-			new_seq.append([p])
-			seq = new_seq
-		preds.append(seq)
-		return preds
+			index += 1
+			sequence[index][0] = p
+		sequence = [el for el in sequence if el != -1]
+		completed_sequences.append(sequence)
+		return completed_sequences
 
 
 def build_input_labels(data, max_seq_length, num_features, nb_classes):
@@ -172,6 +189,8 @@ def generator(ag, max_seq_length, sample_size=32):
 		targets = list()
 		while len(samples) < sample_size:
 			expression, encoded_data = ag.generate()
+			while len(expression) > max_seq_length:
+				expression, encoded_data = ag.generate()
 			inputs, labels = build_input_labels([encoded_data], max_seq_length, 1, 6)
 			samples.extend(inputs)
 			targets.extend(labels)
@@ -180,8 +199,8 @@ def generator(ag, max_seq_length, sample_size=32):
 
 class threadsafe_iter:
 	"""Takes an iterator/generator and makes it thread-safe by
-	    serializing call to the `next` method of given iterator/generator.
-	    """
+		serializing call to the `next` method of given iterator/generator.
+		"""
 
 	def __init__(self, it):
 		self.it = it
@@ -202,7 +221,7 @@ if __name__ == "__main__":
 	if not ag.load():
 		ag.run()
 		ag.save()
-	seq_length = 1500
+	seq_length = 1800
 
 	# ======== Keras ======== #
 
@@ -215,16 +234,14 @@ if __name__ == "__main__":
 
 	gen = generator(ag, seq_length)
 	gen = threadsafe_iter(gen)
-	# for _ in range (0, 5):
-	# 	next(gen)
 
-	keras_lstm.train_on_generator(gen, 30)
-
+	#keras_lstm.train_on_generator(gen, 30)
 	#inputs, labels = build_input_labels(ag.encoded_data, seq_length, 1, 6)
-
 	#keras_lstm.train_net(epochs=30, inputs=inputs, labels=labels, batch_size=32)
 
 	# test_ag = AG.AlgebraGenerator(ps=[0.55,0.25,0.2], num_trials=1)
 	# test_ag.run()
 	# seed = test_ag.encoded_data
-	# keras_lstm.predict(seed, N=100)
+	sequences = keras_lstm.predict(seq_length, N=20)
+	for sequence in sequences:
+		ag.decipher(sequence)

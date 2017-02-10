@@ -57,7 +57,7 @@ class AlgebraGenerator():
 	def generate(self):
 		p = np.random.uniform(0.0, 1.0)
 		expression = [['E'], ['+'], ['E']] if p < 0.5 else [['M'], ['*'], ['M']]
-
+            
 		while ['E'] in expression or ['M'] in expression:
 			try:
 				index = expression.index(['E'])
