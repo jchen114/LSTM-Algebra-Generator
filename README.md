@@ -1,5 +1,5 @@
 # LSTM Algebraic Expressions Generator
-A demonstration of using an LSTM network to generate syntactically correct Algebraic sequences. This demonstration hopes to showcase the ability of using LSTM networks to discover dependencies within a sequence and act accordingly. 
+A demonstration of using an LSTM network to generate syntactically correct Algebraic sequences. This demonstration hopes to showcase the ability of using LSTM networks to discover dependencies within a sequence and act accordingly.
 
 ## Input
 The sequence follows these set of rules:
@@ -19,34 +19,34 @@ It is the goal of the network such that when given a seed it should continue to 
 For example, on a seed of [(, (, (] it should generate a sequence that closes these parenthesis.
 
 ## Architecture
-I use a two layer LSTM network with 128 hidden units each. There are 6 classes: 'I', '+', '\*', '(', ')', '\n'. The network is trained using a softmax output with categorical cross entropy loss. 
+I use a two layer LSTM network with 128 hidden units each. There are 6 classes: 'I', '+', '\*', '(', ')', '\n'. The network is trained using a softmax output with categorical cross entropy loss.
 
 ## Here are some test cases.
 Seed: '('
 
-Produces: 
+Produces:
 `
 ['(',
-  'I', '\*', 'I', '\*', 
+  'I', '\*', 'I', '\*',
   '(',
-   'I', '+', 
+   'I', '+',
    '(',
-    'I', '\*', 'I', '+', 'I', 
-   ')', '\*', 'I', '+', 'I', '+', 'I', 
-  ')', '\*', 'I', '*', 'I', '\*', 
-  '(', 
-   'I', '+', 'I', '\*', 
-   '(', 
-      'I', '+', 'I', '\*', 'I', 
-   ')', '+', 'I', '+', 'I', '+', 'I', '+', 'I', '\*', 'I', '\*', 'I', 
-  ')', '\*', 'I', '\*', 'I', '\*', 'I', 
+    'I', '\*', 'I', '+', 'I',
+   ')', '\*', 'I', '+', 'I', '+', 'I',
+  ')', '\*', 'I', '\*', 'I', '\*', 
+  '(',
+   'I', '+', 'I', '\*',
+   '(',
+      'I', '+', 'I', '\*', 'I',
+   ')', '+', 'I', '+', 'I', '+', 'I', '+', 'I', '\*', 'I', '\*', 'I',
+  ')', '\*', 'I', '\*', 'I', '\*', 'I',
  ')', '\*', 'I', '\*', 'I', '\n']
 `
- 
+
  The paranthesis are balanced and accounted for.
- 
- Seed: '(', '(', '(' 
- 
+
+ Seed: '(', '(', '('
+
  Produces:
  `
- ['(', '(', '(', 'I', '+', 'I', '+', 'I', '\*', 'I', ')', '\*', 'I', '+', 'I', '\*', 'I', ')', '\*', 'I', '+', 'I', ')', '\*', 'I', '\*', 'I', '\*', 'I', '\*', '(', '(', 'I', '+', 'I', ')', '\*', 'I', '\*', 'I', '+', '(', '(', 'I', '+', 'I', '\*', '(', 'I', '+', 'I', ')', '\*', 'I', '+', 'I', '\*', 'I', '\*', '(', '(', 'I', '+', 'I', '+', 'I', '+', 'I', ')', '*', '(', '(', 'I', '+', 'I', ')', '*', 'I', '+', 'I', ')', '*', 'I', '*', 'I', '+', 'I', ')', '+', 'I', '*', 'I', ')', '*', 'I', '+', 'I', '*', 'I', '*', '(', 'I', '+', 'I', '*', 'I', '+', 'I', '*', 'I', '+', 'I', ')', ')', '*', '(', 'I', '*', 'I', '*', 'I', '*', 'I', '*', '(', 'I', '+', 'I', ')', '+', 'I', '+', 'I', '+', 'I', '*', '(', 'I', '+', 'I', '+', 'I', '+', 'I', '*', '(', 'I', '*', 'I', '*', 'I', '*', '(', 'I', '+', 'I', ')', '*', 'I', '+', 'I', ')', '+', 'I', '*', 'I', ')', ')', '*', '(', 'I', '*', 'I', '+', '(', 'I', '+', 'I', '*', 'I', '+', 'I', ')', '*', 'I', '+', 'I', ')', '+', 'I', '*', 'I', ')', '*', '(', 'I', '+', 'I', '*', '(', 'I', '+', 'I', '+', 'I', ')', ')', '*', 'I', '*', 'I', '*', 'I', '\n']`
+ ['(', '(', '(', 'I', '+', 'I', '+', 'I', '\*', 'I', ')', '\*', 'I', '+', 'I', '\*', 'I', ')', '\*', 'I', '+', 'I', ')', '\*', 'I', '\*', 'I', '\*', 'I', '\*', '(', '(', 'I', '+', 'I', ')', '\*', 'I', '\*', 'I', '+', '(', '(', 'I', '+', 'I', '\*', '(', 'I', '+', 'I', ')', '\*', 'I', '+', 'I', '\*', 'I', '\*', '(', '(', 'I', '+', 'I', '+', 'I', '+', 'I', ')', '\*', '(', '(', 'I', '+', 'I', ')', '\*', 'I', '+', 'I', ')', '\*', 'I', '\*', 'I', '+', 'I', ')', '+', 'I', '\*', 'I', ')', '\*', 'I', '+', 'I', '\*', 'I', '\*', '(', 'I', '+', 'I', '\*', 'I', '+', 'I', '\*', 'I', '+', 'I', ')', ')', '\*', '(', 'I', '\*', 'I', '\*', 'I', '\*', 'I', '\*', '(', 'I', '+', 'I', ')', '+', 'I', '+', 'I', '+', 'I', '\*', '(', 'I', '+', 'I', '+', 'I', '+', 'I', '\*', '(', 'I', '\*', 'I', '\*', 'I', '\*', '(', 'I', '+', 'I', ')', '\*', 'I', '+', 'I', ')', '+', 'I', '\*', 'I', ')', ')', '\*', '(', 'I', '\*', 'I', '+', '(', 'I', '+', 'I', '\*', 'I', '+', 'I', ')', '\*', 'I', '+', 'I', ')', '+', 'I', '\*', 'I', ')', '\*', '(', 'I', '+', 'I', '\*', '(', 'I', '+', 'I', '+', 'I', ')', ')', '\*', 'I', '\*', 'I', '\*', 'I', '\n']`
