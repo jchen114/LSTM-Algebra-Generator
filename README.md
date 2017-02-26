@@ -19,7 +19,7 @@ It is the goal of the network such that when given a seed it should continue to 
 For example, on a seed of [(, (, (] it should generate a sequence that closes these parenthesis.
 
 ## Architecture
-I use a two layer LSTM network with 128 hidden units each. There are 6 classes: 'I', '+', '*', '(', ')', '\n'. The network is trained using a softmax output with categorical cross entropy loss. 
+I use a two layer LSTM network with 128 hidden units each. There are 6 classes: 'I', '+', '\*', '(', ')', '\n'. The network is trained using a softmax output with categorical cross entropy loss. 
 
 ## Here are some test cases.
 Seed: '('
@@ -27,7 +27,7 @@ Seed: '('
 Produces: 
 `
 ['(',
-  'I', '\*', 'I', '\*', 
+  'I', '*', 'I', '*', 
   '(',
    'I', '+', 
    '(',
