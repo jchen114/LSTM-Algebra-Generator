@@ -15,11 +15,11 @@ Using these sets of rules, we can generate sequences like:
 I + I * (I + I * (I + I)) + I * (I + I) + I
 
 ## Output
-It is the goal of the network such that when given a seed it should continue to generate a syntactically correct sequence.
+It is the goal of the network such that when given a seed it should continue to generate a syntactically correct sequence by recursively feeding the new sequence back into itself until it hits an end character, namely the '\n'.
 For example, on a seed of [(, (, (] it should generate a sequence that closes these parenthesis.
 
 ## Architecture
-I use a two layer LSTM network with 128 hidden units each. There are 6 classes: 'I', '+', '\*', '(', ')', '\n'. The network is trained using a softmax output with categorical cross entropy loss.
+I use a two layer LSTM network with 128 hidden units each. There are 6 classes: 'I', '+', '\*', '(', ')', '\n'. The network is trained using a softmax output with categorical cross entropy loss. The network is asked to predict on every label during training. I found that this results in faster convergence. Sequences are presented in batches of 15 time sequences. Each time sequence entry has 1 feature.
 
 ## Here are some test cases.
 Seed: '('
